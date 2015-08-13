@@ -7,7 +7,6 @@ import java.io.File;
 import java.net.URL;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.Logger;
 import org.apache.logging.log4j.core.config.ConfigurationFactory;
@@ -53,6 +52,7 @@ public class LogServiceIntegrationJUnitTest {
     protected void after() {
       Configurator.shutdown();
       
+      System.clearProperty(ConfigurationFactory.CONFIGURATION_FILE_PROPERTY);
       if (beforeConfigFileProp != null) {
         System.setProperty(ConfigurationFactory.CONFIGURATION_FILE_PROPERTY, beforeConfigFileProp);
       }
@@ -91,7 +91,7 @@ public class LogServiceIntegrationJUnitTest {
     LogService.reconfigure();
     
     assertThat(LogService.isUsingGemFireDefaultConfig()).as(LogService.getConfigInformation()).isTrue();
-    assertThat(System.getProperty(ConfigurationFactory.CONFIGURATION_FILE_PROPERTY)).isEqualTo(this.defaultConfigUrl.toString());
+    assertThat(System.getProperty(ConfigurationFactory.CONFIGURATION_FILE_PROPERTY)).isNullOrEmpty();
   }
   
   @Test
@@ -167,23 +167,6 @@ public class LogServiceIntegrationJUnitTest {
   }
   
   @Test
-  public void intializeAfterUsingLoggerShouldReconfigure() {
-    assertThat(System.getProperty(ConfigurationFactory.CONFIGURATION_FILE_PROPERTY)).as("log4j.configurationFile="+System.getProperty(ConfigurationFactory.CONFIGURATION_FILE_PROPERTY)).isNullOrEmpty();
-    
-    Configurator.shutdown();
-    
-    LogManager.getRootLogger();
-
-    assertThat(System.getProperty(ConfigurationFactory.CONFIGURATION_FILE_PROPERTY)).as("log4j.configurationFile="+System.getProperty(ConfigurationFactory.CONFIGURATION_FILE_PROPERTY)).isNullOrEmpty();
-    
-    LogService.reconfigure();
-    LogService.initialize();
-    
-    assertThat(System.getProperty(ConfigurationFactory.CONFIGURATION_FILE_PROPERTY)).as("log4j.configurationFile="+System.getProperty(ConfigurationFactory.CONFIGURATION_FILE_PROPERTY)).contains(LogService.DEFAULT_CONFIG);
-    assertThat(LogService.isUsingGemFireDefaultConfig()).as(LogService.getConfigInformation()).isTrue();
-  }
-  
-  @Test
   public void cliConfigLoadsAsResource() {
     assertThat(this.cliConfigUrl).isNotNull();
     assertThat(this.cliConfigUrl.toString()).contains(LogService.CLI_CONFIG);
@@ -194,16 +177,33 @@ public class LogServiceIntegrationJUnitTest {
     assertThat(this.defaultConfigUrl).isNotNull();
     assertThat(this.defaultConfigUrl.toString()).contains(LogService.DEFAULT_CONFIG);
   }
-  
+
   @Test
-  public void shouldConvertConfigurationFilePropertyValueToURL() throws Exception {
-    System.setProperty(ConfigurationFactory.CONFIGURATION_FILE_PROPERTY, LogService.CLI_CONFIG);
+  public void shouldNotUseDefaultConfigIfCliConfigSpecified() throws Exception {
+    System.setProperty(ConfigurationFactory.CONFIGURATION_FILE_PROPERTY, this.cliConfigUrl.toString());
     
     LogService.reconfigure();
-    
+  
     assertThat(LogService.isUsingGemFireDefaultConfig()).as(LogService.getConfigInformation()).isFalse();
-    assertThat(this.cliConfigUrl.toString()).contains(LogService.CLI_CONFIG);
     assertThat(System.getProperty(ConfigurationFactory.CONFIGURATION_FILE_PROPERTY)).isEqualTo(this.cliConfigUrl.toString());
     assertThat(LogService.getLogger().getName()).isEqualTo(getClass().getName());
+  }
+
+  @Test
+  public void isUsingGemFireDefaultConfigShouldBeTrueIfDefaultConfig() throws Exception {
+    final String config = LogService.class.getResource(LogService.DEFAULT_CONFIG).toURI().toString();
+    System.setProperty(ConfigurationFactory.CONFIGURATION_FILE_PROPERTY, config);
+    
+    assertThat(LogService.getConfiguration().getConfigurationSource().toString()).contains("log4j2.xml");
+    assertThat(LogService.isUsingGemFireDefaultConfig()).isTrue();
+  }
+
+  @Test
+  public void isUsingGemFireDefaultConfigShouldBeFalseIfCliConfig() throws Exception {
+    final String config = LogService.class.getResource(LogService.CLI_CONFIG).toURI().toString();
+    System.setProperty(ConfigurationFactory.CONFIGURATION_FILE_PROPERTY, config);
+    
+    assertThat(LogService.getConfiguration().getConfigurationSource().toString()).isNotEqualTo("/log4j2.xml");
+    assertThat(LogService.isUsingGemFireDefaultConfig()).isFalse();
   }
 }

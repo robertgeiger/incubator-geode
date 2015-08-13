@@ -8,7 +8,6 @@ import org.junit.runners.Suite;
   DistributedSystemLogFileJUnitTest.class,
   LocatorLogFileJUnitTest.class,
   LogServiceIntegrationJUnitTest.class,
-  LogServiceUserDirIntegrationJUnitTest.class,
   MergeLogFilesJUnitTest.class,
 })
 public class LoggingIntegrationTestSuite {

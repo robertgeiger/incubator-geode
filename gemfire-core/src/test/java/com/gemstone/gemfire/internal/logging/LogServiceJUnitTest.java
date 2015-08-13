@@ -45,34 +45,6 @@ public class LogServiceJUnitTest {
   }
   
   @Test
-  public void isUsingGemFireDefaultConfigShouldBeTrueIfDefaultConfig() {
-    System.setProperty(ConfigurationFactory.CONFIGURATION_FILE_PROPERTY, LogService.DEFAULT_CONFIG);
-    
-    assertThat(LogService.isUsingGemFireDefaultConfig()).isTrue();
-  }
-
-  @Test
-  public void isUsingGemFireDefaultConfigShouldBeFalseIfEmpty() {
-    System.setProperty(ConfigurationFactory.CONFIGURATION_FILE_PROPERTY, "");
-    
-    assertThat(LogService.isUsingGemFireDefaultConfig()).isFalse();
-  }
-
-  @Test
-  public void isUsingGemFireDefaultConfigShouldBeFalseIfNull() {
-    System.setProperty(ConfigurationFactory.CONFIGURATION_FILE_PROPERTY, "");
-    
-    assertThat(LogService.isUsingGemFireDefaultConfig()).isFalse();
-  }
-
-  @Test
-  public void isUsingGemFireDefaultConfigShouldBeFalseIfCliConfig() {
-    System.setProperty(ConfigurationFactory.CONFIGURATION_FILE_PROPERTY, LogService.CLI_CONFIG);
-    
-    assertThat(LogService.isUsingGemFireDefaultConfig()).isFalse();
-  }
-  
-  @Test
   @Parameters(method = "getToLevelParameters")
   public void toLevelShouldReturnMatchingLog4jLevel(final int intLevel, final Level level) {
     assertThat(LogService.toLevel(intLevel)).isSameAs(level);
